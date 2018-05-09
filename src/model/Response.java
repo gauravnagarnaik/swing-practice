@@ -2,7 +2,7 @@ package model;
 
 import java.util.List;
 
-public class Response {
+public class Response extends DataObject {
 
     private List<Member> members;
 

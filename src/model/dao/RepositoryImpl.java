@@ -2,6 +2,7 @@ package model.dao;
 
 import model.Login_Info;
 import model.Member;
+import utils.MemberIdSeq;
 
 
 import java.sql.*;
@@ -13,6 +14,8 @@ public class RepositoryImpl implements Repository {
 
     private DbConnection dbConnection = DbConnection.getDbInstance();
 
+    private MemberIdSeq memberIdSeq = MemberIdSeq.getGetInstance();
+
     private static final String GET_ALL_USERS_FOR_ADMINS = "SELECT * FROM MEMBER";
 
     private static final String GET_USER_BY_FIRST_NAME = "SELECT MEMBER_ID, FIRST_NAME, LAST_NAME, ADDRESS, PHONE_NUM FROM MEMBER WHERE FIRST_NAME = ?";
@@ -23,7 +26,7 @@ public class RepositoryImpl implements Repository {
 
     private static final String GET_ALL_USERS_FOR_USER = "SELECT FIRST_NAME, LAST_NAME, ADDRESS, PHONE_NUM FROM MEMBER WHERE IS_ADMIN = FALSE";
 
-    private static final String ADD_MEMBER = "INSERT INTO MEMBER(FIRST_NAME, LAST_NAME, ADDRESS, PHONE_NUM, IS_ADMIN) VALUES(?,?,?,?,?)";
+    private static final String ADD_MEMBER = "INSERT INTO MEMBER(MEMBER_ID, FIRST_NAME, LAST_NAME, ADDRESS, PHONE_NUM, IS_ADMIN) VALUES(?,?,?,?,?,?)";
 
     private static final String UPDATE_USER = "UPDATE MEMBER SET FIRST_NAME = ?, LAST_NAME = ?, ADDRESS = ?, PHONE_NUM = ?, IS_ADMIN = ? WHERE MEMBER_ID = ?";
 
@@ -31,7 +34,7 @@ public class RepositoryImpl implements Repository {
 
     private static final String DELETE_LOGIN = "DELETE FROM LOGIN_INFO WHERE MEMBER_ID = ?";
 
-    private static final String GET_MEMBER = "SELECT FIRST_NAME, LAST_NAME, ADDRESS, PHONE_NUM FROM MEMBER WHERE MEMBER_ID = ?";
+    private static final String GET_MEMBER = "SELECT FIRST_NAME, LAST_NAME, ADDRESS, PHONE_NUM, IS_ADMIN FROM MEMBER WHERE MEMBER_ID = ?";
 
     private static final String CHECK_LOGIN = "SELECT MEMBER_ID, USER_NAME, PASSWORD FROM LOGIN_INFO WHERE USER_NAME = ? AND PASSWORD = ?";
 
@@ -58,7 +61,7 @@ public class RepositoryImpl implements Repository {
             ResultSet rs = getUserStmt.executeQuery(GET_ALL_USERS_FOR_ADMINS);
             while(rs.next()) {
                 Member user = new Member();
-                user.setMemberId(rs.getInt("MEMBER_ID"));
+                user.setMemberId(rs.getLong("MEMBER_ID"));
                 user.setFirstName(rs.getString("FIRST_NAME"));
                 user.setLastName(rs.getString("LAST_NAME"));
                 user.setAddress(rs.getString("ADDRESS"));
@@ -114,7 +117,7 @@ public class RepositoryImpl implements Repository {
             statement.setString(1, login.getUserName());
             statement.setString(2, login.getPassword());
             ResultSet resultSet = statement.executeQuery();
-            if(resultSet != null) {
+            if(resultSet.next()) {
                 login_info = new Login_Info();
                 login_info.setMemberId(resultSet.getLong("MEMBER_ID"));
                 login_info.setUserName(resultSet.getString("USER_NAME"));
@@ -139,9 +142,9 @@ public class RepositoryImpl implements Repository {
             PreparedStatement statement = connection.prepareStatement(GET_MEMBER);
             statement.setLong(1, memberId);
             ResultSet resultSet = statement.executeQuery();
-            if(resultSet != null){
+            if(resultSet.next()){
                 loginMember = new Member();
-                loginMember.setMemberId(resultSet.getLong("MEMBER_ID"));
+                loginMember.setMemberId(memberId);
                 loginMember.setFirstName(resultSet.getString("FIRST_NAME"));
                 loginMember.setLastName(resultSet.getString("LAST_NAME"));
                 loginMember.setAddress(resultSet.getString("ADDRESS"));
@@ -166,7 +169,7 @@ public class RepositoryImpl implements Repository {
             PreparedStatement statement = connection.prepareStatement(GET_MEMBER_ID_FROM_PHONE_NUM);
             statement.setString(1, phoneNumber);
             ResultSet resultSet = statement.executeQuery();
-            if(resultSet != null){
+            if(resultSet.next()){
                 memberId = resultSet.getLong("MEMBER_ID");
             }
         } catch (SQLException | NullPointerException ex){
@@ -210,7 +213,7 @@ public class RepositoryImpl implements Repository {
             PreparedStatement statement = connection.prepareStatement(GET_LOGIN_INFO);
             statement.setLong(1, memberId);
             ResultSet resultSet = statement.executeQuery();
-            if(resultSet != null){
+            if(resultSet.next()){
                 login_info = new Login_Info();
                 login_info.setMemberId(memberId);
                 login_info.setUserName(resultSet.getString("USER_NAME"));
@@ -242,11 +245,12 @@ public class RepositoryImpl implements Repository {
                 statement.executeUpdate();
             } else {
                 PreparedStatement statement = connection.prepareStatement(ADD_MEMBER);
-                statement.setString(1, member.getFirstName());
-                statement.setString(2, member.getLastName());
-                statement.setString(3, member.getAddress());
-                statement.setString(4, member.getPhoneNumber());
-                statement.setBoolean(5, member.getIsAdmin());
+                statement.setLong(1, memberIdSeq.getMemberId());
+                statement.setString(2, member.getFirstName());
+                statement.setString(3, member.getLastName());
+                statement.setString(4, member.getAddress());
+                statement.setString(5, member.getPhoneNumber());
+                statement.setBoolean(6, member.getIsAdmin());
                 statement.executeUpdate();
             }
         } catch (SQLException | NullPointerException ex){

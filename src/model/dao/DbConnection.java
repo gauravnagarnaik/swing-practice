@@ -26,12 +26,11 @@ public class DbConnection {
 		
 		try{
 
-			String url = "jdbc:mysql://sql2.njit.edu/sss329";
+			String url = "<MYSQL URL>";
 
 			Class.forName("com.mysql.jdbc.Driver");
-			//return DriverManager.getConnection(url, "sss329", "vLsLHc1Lu");
 
-			Connection connection = DriverManager.getConnection("jdbc:mysql://sql2.njit.edu/sss329?user=sss329&password=");
+			Connection connection = DriverManager.getConnection("URL?user=<user>&password=<password>");
 
 			return connection;
 
